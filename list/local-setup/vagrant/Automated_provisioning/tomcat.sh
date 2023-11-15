@@ -1,6 +1,10 @@
+#!/bin/bash
 TOMURL="https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.75/bin/apache-tomcat-9.0.75.tar.gz"
-dnf -y install java-11-openjdk java-11-openjdk-devel
-dnf install git maven wget -y
+sudo yum update -y
+sudo yum install epel-release -y
+sudo yum install dnf -y
+sudo dnf -y install java-11-openjdk java-11-openjdk-devel
+sudo dnf install git maven wget -y
 cd /tmp/
 wget $TOMURL -O tomcatbin.tar.gz
 EXTOUT=`tar xzvf tomcatbin.tar.gz`
@@ -46,8 +50,14 @@ systemctl daemon-reload
 systemctl start tomcat
 systemctl enable tomcat
 
-git clone -b main https://github.com/hkhcoder/vprofile-project.git
-cd vprofile-project
+systemctl start firewalld
+systemctl enable firewalld
+firewall-cmd --get-active-zones
+firewall-cmd --zone=public --add-port=8080/tcp --permanent
+firewall-cmd --reload
+
+git clone -b main https://github.com/hamzazahidulislam/automated-vprofile-project.git
+cd automated-vprofile-project
 mvn install
 systemctl stop tomcat
 sleep 20
@@ -55,7 +65,9 @@ rm -rf /usr/local/tomcat/webapps/ROOT*
 cp target/vprofile-v2.war /usr/local/tomcat/webapps/ROOT.war
 systemctl start tomcat
 sleep 20
-systemctl stop firewalld
-systemctl disable firewalld
+
+# systemctl stop firewalld
+# systemctl disable firewalld
 #cp /vagrant/application.properties /usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.properties
+chown tomcat.tomcat /usr/local/tomcat/webapps -R
 systemctl restart tomcat
